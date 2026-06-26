@@ -1,0 +1,25 @@
+name: DeathPoint
+version: 1.0.0
+main: io.github.astail.deathpoint.DeathPointPlugin
+description: "プレイヤーが死亡した座標を全体チャットへ流すプラグインです。"
+api-version: '26.1.2'
+author: astail
+
+commands:
+  deathpoint:
+    description: "現在の設定や自分の最後の死亡地点を確認します。"
+    usage: "/deathpoint <status|reload>"
+    aliases: [dp]
+    permission: deathpoint.use
+    permission-message: "§cこのコマンドを実行する権限がありません。"
+
+permissions:
+  deathpoint.receive:
+    description: "死亡通知を全体チャットで受け取れるかどうか（受信可否）。"
+    default: true
+  deathpoint.use:
+    description: "/deathpoint の自分向け操作（status）を許可します。"
+    default: true
+  deathpoint.manage:
+    description: "/deathpoint reload など、サーバー全体に影響する操作を許可します。"
+    default: op
