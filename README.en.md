@@ -28,7 +28,7 @@ DeathPoint announces the coordinates to everyone the instant you die and keeps a
 
 ## Installation
 
-1. Drop `DeathPoint-1.0.0.jar` into `plugins/` and restart.
+1. Drop `DeathPoint-1.1.0.jar` into `plugins/` and restart.
 2. From then on, whenever a player dies, the death coordinates are broadcast to chat. No configuration needed.
 
 Example:
@@ -111,7 +111,7 @@ Example sent to Discord:
 ## Build
 
 ```bash
-./deploy.sh        # Native on Mac (JDK 25 + Maven). Output: target/DeathPoint-1.0.0.jar
+./deploy.sh        # Native on Mac (JDK 25 + Maven). Output: target/DeathPoint-1.1.0.jar
 # or
 mvn -B clean package
 ```
@@ -133,7 +133,7 @@ gh release download --repo astail/mc-death-point --pattern '*.jar'
 
 ### B. Build it yourself
 
-Follow [Build](#build) to produce `target/DeathPoint-1.0.0.jar`.
+Follow [Build](#build) to produce `target/DeathPoint-1.1.0.jar`.
 
 ### Placement
 
@@ -141,11 +141,11 @@ Put the jar in the server's `plugins/` and restart.
 
 ```bash
 # Bind mount (copy to the host-side plugins directory)
-cp target/DeathPoint-1.0.0.jar /path/to/data/plugins/
+cp target/DeathPoint-1.1.0.jar /path/to/data/plugins/
 docker restart <container-name>
 
 # Named volume etc. (copy directly into the container)
-docker cp target/DeathPoint-1.0.0.jar <container-name>:/data/plugins/
+docker cp target/DeathPoint-1.1.0.jar <container-name>:/data/plugins/
 docker restart <container-name>
 ```
 
@@ -167,13 +167,13 @@ services:
       VERSION: "26.2"
       PAPER_CHANNEL: "experimental"
       PLUGINS: |
-        https://github.com/astail/mc-death-point/releases/download/v1.0.0/DeathPoint-1.0.0.jar
+        https://github.com/astail/mc-death-point/releases/download/v1.1.0/DeathPoint-1.1.0.jar
     volumes:
       - ./data:/data
     restart: unless-stopped
 ```
 
-`PLUGINS` accepts multiple newline-separated entries. When you update the version, change `v1.0.0` and the filename in the URL to match the new release (e.g. `.../download/v1.0.0/DeathPoint-1.0.0.jar`).
+`PLUGINS` accepts multiple newline-separated entries. When you update the version, change `v1.1.0` and the filename in the URL to match the new release (e.g. `.../download/v1.1.0/DeathPoint-1.1.0.jar`).
 
 You'll see this in the startup log on success:
 
