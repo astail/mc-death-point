@@ -5,6 +5,9 @@ description: "プレイヤーが死亡した座標を全体チャットへ流す
 api-version: '26.1.2'
 author: astail
 
+# DiscordSRV が居れば先に読み込ませる（必須ではない。無くてもそのまま動く）。
+softdepend: [DiscordSRV]
+
 commands:
   deathpoint:
     description: "現在の設定や自分の最後の死亡地点を確認します。"
