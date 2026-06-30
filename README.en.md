@@ -18,6 +18,7 @@ DeathPoint announces the coordinates to everyone the instant you die and keeps a
 - **Records the last death point**: each player's most recent death is saved to `deaths.yml` and survives restarts, viewable with `/deathpoint`.
 - **Sound**: optionally play a bell sound to receivers when a death is announced (toggle in `config.yml`).
 - **Custom message**: change the announcement text freely with placeholders.
+- **DiscordSRV integration**: if [DiscordSRV](https://github.com/DiscordSRV/DiscordSRV) is installed, the same death-coordinate log is relayed to Discord automatically (does nothing when it isn't installed).
 
 ## Requirements
 
@@ -66,6 +67,9 @@ Alias: `/dp`
 enabled: true              # Enable death broadcasts server-wide (apply with /deathpoint reload after editing)
 notify-sound: true         # Play a bell sound to receivers when a death is announced
 message: "%player% が %dimension%（%world%）の座標 (%x%, %y%, %z%) で力尽きました"
+discord:
+  enabled: true            # When DiscordSRV is installed, relay the death-coordinate log to Discord too
+  channel: "global"        # Destination channel name (defined in DiscordSRV's Channels; empty = main channel)
 ```
 
 Placeholders available in `message`:
@@ -77,16 +81,32 @@ Placeholders available in `message`:
 | `%dimension%` | Dimension label (Overworld / Nether / The End) |
 | `%x%` `%y%` `%z%` | Death coordinates (integer block coordinates) |
 
+## DiscordSRV integration
+
+On servers that run [DiscordSRV](https://github.com/DiscordSRV/DiscordSRV), DeathPoint relays **the same death-coordinate log it sends to in-game chat to Discord as well**. No client mod and almost no extra setup is required; when DiscordSRV is absent the feature is automatically disabled (the plugin still works as usual).
+
+- **Toggle**: `discord.enabled` in `config.yml` (default `true`).
+- **Destination**: set `discord.channel` to a channel name defined in DiscordSRV's `Channels` (default `global`). Leave it empty to use the main channel.
+- **Body**: the same `message` is sent as plain text (prefixed with `☠`); no colors.
+- **Status**: check the linkage state (`連携中` / `待機` / `OFF`) in the `Discord` field of `/deathpoint status` or in the startup log.
+
+Example sent to Discord:
+
+```text
+☠ astail が ネザー（world_nether）の座標 (128, 72, -340) で力尽きました
+```
+
 ## How it works / technical notes
 
 - Listens to `PlayerDeathEvent` (`EventPriority.MONITOR`) and reads the location at death.
 - Substitutes the coordinates into the message template and sends it to every online player who has `deathpoint.receive` (with an optional bell sound via `notify-sound`).
 - At the same time it saves each player's last death point to `deaths.yml` (`<dataFolder>/deaths.yml`) so it can be shown to the player via `/deathpoint`.
+- If DiscordSRV is installed, the same coordinates are sent as plain text to a Discord channel through the DiscordSRV API (via reflection). DiscordSRV is not a compile-time dependency, so the plugin runs fine without it.
 
 ### Limitations
 
 - Only the single most recent death point is kept per player (no history).
-- While `enabled: false`, neither broadcasts nor death-point recording happen.
+- While `enabled: false`, neither broadcasts nor death-point recording happen (Discord relaying stops too).
 
 ## Build
 
@@ -158,7 +178,7 @@ services:
 You'll see this in the startup log on success:
 
 ```text
-[DeathPoint] DeathPoint を有効化しました（状態: ON / 通知音: あり）。
+[DeathPoint] DeathPoint を有効化しました（状態: ON / 通知音: あり / Discord連携: 連携中）。
 ```
 
 ## License

@@ -48,7 +48,8 @@ public final class DeathPointCommand implements CommandExecutor, TabCompleter {
 
     private void sendStatus(CommandSender sender) {
         sender.sendMessage(info("DeathPoint: " + (plugin.isActive() ? "ON" : "OFF")
-                + " / 通知音 " + (plugin.isNotifySound() ? "あり" : "なし")));
+                + " / 通知音 " + (plugin.isNotifySound() ? "あり" : "なし")
+                + " / Discord " + discordStatusLabel()));
         if (sender instanceof Player player) {
             DeathPointPlugin.DeathRecord record = plugin.getLastDeath(player);
             if (record != null) {
@@ -68,6 +69,14 @@ public final class DeathPointCommand implements CommandExecutor, TabCompleter {
     }
 
     // ───────────── 補助 ─────────────
+
+    /** Discord 連携の状態ラベル（設定 OFF / 連携中 / 待機）。 */
+    private String discordStatusLabel() {
+        if (!plugin.isDiscordEnabled()) {
+            return "OFF";
+        }
+        return plugin.isDiscordAvailable() ? "連携中" : "待機（DiscordSRV 未検出）";
+    }
 
     private boolean requireManage(CommandSender sender) {
         if (sender.hasPermission("deathpoint.manage")) {

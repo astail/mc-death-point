@@ -43,12 +43,23 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
     /** 本文中の %placeholder% を検出する正規表現。 */
     private static final Pattern TOKEN = Pattern.compile("%[a-z_]+%");
 
+    /** discord.channel の既定値。DiscordSRV の標準チャンネル名。 */
+    private static final String DEFAULT_DISCORD_CHANNEL = "global";
+
     /** プレイヤーごとの「最後の死亡地点」。deaths.yml に永続化し、再起動後も保持する。 */
     private final Map<UUID, DeathRecord> lastDeath = new HashMap<>();
 
     private boolean active;
     private boolean notifySound;
     private String message;
+
+    /** discord.enabled: DiscordSRV が動作中のとき、死亡座標ログを Discord にも流すか。 */
+    private boolean discordEnabled;
+    /** discord.channel: 送信先の DiscordSRV チャンネル名（空欄でメインチャンネル）。 */
+    private String discordChannel;
+
+    /** DiscordSRV 連携。未導入の環境では何もしない。onEnable で生成する。 */
+    private DiscordNotifier discord;
 
     /** 死亡地点の永続化先（&lt;dataFolder&gt;/deaths.yml）。loadDeaths() で初期化される。 */
     private File deathsFile;
@@ -66,8 +77,10 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
             return;
         }
         loadDeaths();
+        discord = new DiscordNotifier(this);
         getLogger().info("DeathPoint を有効化しました（状態: " + (active ? "ON" : "OFF")
-                + " / 通知音: " + (notifySound ? "あり" : "なし") + "）。");
+                + " / 通知音: " + (notifySound ? "あり" : "なし")
+                + " / Discord連携: " + discordStatusLabel() + "）。");
     }
 
     @Override
@@ -102,6 +115,8 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
         active = config.getBoolean("enabled", true);
         notifySound = config.getBoolean("notify-sound", true);
         message = config.getString("message", DEFAULT_MESSAGE);
+        discordEnabled = config.getBoolean("discord.enabled", true);
+        discordChannel = config.getString("discord.channel", DEFAULT_DISCORD_CHANNEL);
     }
 
     // ───────────────────────── 死亡地点の永続化 ─────────────────────────
@@ -181,7 +196,10 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
 
     // ───────────────────────── 通知ロジック ─────────────────────────
 
-    /** 死亡地点を全体へ流す。deathpoint.receive を持つオンライン全員に届き、必要なら音も鳴らす。 */
+    /**
+     * 死亡地点を全体へ流す。deathpoint.receive を持つオンライン全員に届き、必要なら音も鳴らす。
+     * さらに DiscordSRV が動作中で discord.enabled が true なら、同じ死亡座標を Discord にも送る。
+     */
     private void announceDeath(Player victim, Location loc) {
         Component broadcast = renderBroadcast(victim, loc);
         for (Player viewer : getServer().getOnlinePlayers()) {
@@ -192,6 +210,10 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
             if (notifySound) {
                 viewer.playSound(DEATH_SOUND, Sound.Emitter.self());
             }
+        }
+        if (discordEnabled && discord != null) {
+            // Discord は色やコンポーネントを解釈しないため、プレーンテキストで送る。
+            discord.send(discordChannel, renderPlain(victim, loc));
         }
     }
 
@@ -234,6 +256,37 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
         return result;
     }
 
+    /** Discord 送信用に、本文テンプレートをプレーンテキストへ整形する（先頭に ☠ を付ける）。 */
+    private String renderPlain(Player victim, Location loc) {
+        World world = loc.getWorld();
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("%player%", victim.getName());
+        tokens.put("%world%", world.getName());
+        tokens.put("%dimension%", dimensionLabel(world));
+        tokens.put("%x%", Integer.toString(loc.getBlockX()));
+        tokens.put("%y%", Integer.toString(loc.getBlockY()));
+        tokens.put("%z%", Integer.toString(loc.getBlockZ()));
+        return "☠ " + substitutePlain(message, tokens);
+    }
+
+    /**
+     * テンプレート文字列の %placeholder% をプレーン文字列へ置換する（Component を使わない版）。
+     * 未知のトークンはそのまま残す。Discord 連携やテストから利用する。
+     */
+    static String substitutePlain(String template, Map<String, String> tokens) {
+        Matcher matcher = TOKEN.matcher(template);
+        StringBuilder sb = new StringBuilder();
+        int last = 0;
+        while (matcher.find()) {
+            sb.append(template, last, matcher.start());
+            String replacement = tokens.get(matcher.group());
+            sb.append(replacement != null ? replacement : matcher.group());
+            last = matcher.end();
+        }
+        sb.append(template, last, template.length());
+        return sb.toString();
+    }
+
     /** ワールドの次元を日本語ラベルにする（オーバーワールド / ネザー / ジ・エンド）。 */
     private static String dimensionLabel(World world) {
         return switch (world.getEnvironment()) {
@@ -260,6 +313,24 @@ public final class DeathPointPlugin extends JavaPlugin implements Listener {
 
     public boolean isNotifySound() {
         return notifySound;
+    }
+
+    /** discord.enabled の設定値（Discord への送信が config で有効か）。 */
+    public boolean isDiscordEnabled() {
+        return discordEnabled;
+    }
+
+    /** DiscordSRV プラグインが導入・有効化されているか（実際に送信できる状態か）。 */
+    public boolean isDiscordAvailable() {
+        return discord != null && discord.isAvailable();
+    }
+
+    /** Discord 連携の状態ラベル（ログ・status 表示用）。設定 OFF / 連携中 / 待機 の 3 状態。 */
+    private String discordStatusLabel() {
+        if (!discordEnabled) {
+            return "OFF";
+        }
+        return isDiscordAvailable() ? "連携中" : "待機（DiscordSRV 未検出）";
     }
 
     /** 本人の最後の死亡地点（無ければ null）。 */

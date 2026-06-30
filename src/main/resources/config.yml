@@ -16,3 +16,13 @@ notify-sound: true
 #            %dimension% … 次元の日本語名（オーバーワールド / ネザー / ジ・エンド）
 #            %x% %y% %z% … 死亡した座標
 message: "%player% が %dimension%（%world%）の座標 (%x%, %y%, %z%) で力尽きました"
+
+# discord: DiscordSRV と連携しているときの設定。
+#          DiscordSRV が導入・有効なときだけ動作します（未導入なら自動的に無視されます）。
+#          送信される本文は上記 message と同じ内容（プレーンテキスト、先頭に ☠）です。
+discord:
+  # enabled: DiscordSRV が動作中のとき、死亡座標ログを Discord にも流すかどうか。
+  enabled: true
+  # channel: 送信先チャンネル。DiscordSRV の config.yml の Channels で定義した名前を指定します。
+  #          空欄（""）にするとメインチャンネルへ送ります。
+  channel: "global"
