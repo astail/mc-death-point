@@ -22,7 +22,7 @@ DeathPoint announces the coordinates to everyone the instant you die and keeps a
 
 ## Requirements
 
-- Server: Paper 26.1.2 (build 69+)
+- Server: Paper 26.2 (experimental channel)
 - Java: 25
 - Clients: vanilla (no mods, server-side only)
 

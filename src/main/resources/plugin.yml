@@ -2,7 +2,7 @@ name: DeathPoint
 version: 1.1.0
 main: io.github.astail.deathpoint.DeathPointPlugin
 description: "プレイヤーが死亡した座標を全体チャットへ流すプラグインです。"
-api-version: '26.1.2'
+api-version: '26.2'
 author: astail
 
 # DiscordSRV が居れば先に読み込ませる（必須ではない。無くてもそのまま動く）。
